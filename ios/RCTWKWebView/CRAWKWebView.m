@@ -56,6 +56,43 @@
 
 RCT_NOT_IMPLEMENTED(- (instancetype)initWithCoder:(NSCoder *)aDecoder)
 
+- (void)startLongPress:(UILongPressGestureRecognizer *)pressSender
+{
+  if(pressSender.state == UIGestureRecognizerStateBegan){
+    //实现相关功能
+//    [self detectInWebView:pressSender];
+    NSLog(@"1. 开始长按手势");
+    //创建通知
+    NSNotification *notification =[NSNotification notificationWithName:@"longPressStart" object:nil];
+    //通过通知中心发送通知
+    [[NSNotificationCenter defaultCenter] postNotification:notification];
+  }else if(pressSender.state == UIGestureRecognizerStateEnded){
+    
+    //可以添加你长按手势执行的方法,不过是在手指松开后执行
+    NSLog(@"2. 结束长按手势");
+    //创建通知
+    NSNotification *notification =[NSNotification notificationWithName:@"longPressEnd" object:nil];
+    //通过通知中心发送通知
+    [[NSNotificationCenter defaultCenter] postNotification:notification];
+    
+  }else if(pressSender.state == UIGestureRecognizerStateChanged){
+    
+    //在手指点下去一直不松开的状态执行
+    NSLog(@"3. 长按手势改变");
+  }
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+  NSLog(@"%@",otherGestureRecognizer.class);
+  
+  if ([otherGestureRecognizer isKindOfClass:[UILongPressGestureRecognizer class]]) {
+    //只有当手势为长按手势时反馈，飞长按手势将阻止。
+    return YES;
+  }else{
+    return NO;
+  }
+}
+
 - (instancetype)initWithProcessPool:(WKProcessPool *)processPool
 {
   if(self = [self initWithFrame:CGRectZero])
@@ -75,6 +112,14 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithCoder:(NSCoder *)aDecoder)
     _webView.navigationDelegate = self;
     _webView.scrollView.delegate = self;
     
+    UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(startLongPress:)];
+    longPress.delegate = self;
+    
+    longPress.minimumPressDuration = 0.4f;
+    longPress.numberOfTouchesRequired = 1;
+    longPress.cancelsTouchesInView = YES;
+    [self addGestureRecognizer:longPress];
+
 #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000 /* __IPHONE_11_0 */
     // `contentInsetAdjustmentBehavior` is only available since iOS 11.
     // We set the default behavior to "never" so that iOS
@@ -631,3 +676,4 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithCoder:(NSCoder *)aDecoder)
 }
 
 @end
+
